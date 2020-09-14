@@ -84,7 +84,7 @@ Security requirement: $M$ and $W$ must be hidden.
 
 The attacker is allowed to generate any keyword and ask for the trap door. The real attack happens when the attacker understands how the trap door works: he sends two keywords and the challenger is generating one trapdoor for one of those then the attacker can say to which original keyword the trapdoor belongs.
 
-![image-20200912163806827](/home/weatherly/.config/Typora/typora-user-images/image-20200912163806827.png)
+![image-20200912163806827](./../images/image-20200912163806827.png)
 
 $Pr[b = b’] = 1⁄2 + ε$. If $ε$ is not negligible attacker wins game and scheme is not secure. if we can prove that $\epsilon$ is very small than the attacker is only guessing and he does not really know how trapdoors are constructed.
 
@@ -94,7 +94,7 @@ To prove that is $ε$ negligible security proof must answer these questions
 2. Does trapdoor of keywords other than challenge keyword reveal information on challenge ciphertext?
 3. Is trapdoor of challenge keyword simulabile?
 
-<img src="/home/weatherly/.config/Typora/typora-user-images/image-20200912164104621.png" alt="image-20200912164104621" style="zoom: 33%;" />
+<img src="./../images/image-20200912164104621.png" alt="image-20200912164104621" style="zoom: 33%;" />
 
 ~~slides 20-26~~
 
@@ -102,7 +102,7 @@ To prove that is $ε$ negligible security proof must answer these questions
 
 A commitment scheme is a scheme that allows parties to agree on something remotely. Let's say that Alice and Bob want to toss a coin remotely and based on the result take a decision. It becomes easy to cheat (when the first communicates the result of their toss, the second can decide what to say to win the game). To make this work, Alice would need to commit to her result and this commitment needs to be possible to verify. 
 
-<img src="/home/weatherly/.config/Typora/typora-user-images/image-20200912164452137.png" alt="image-20200912164452137" style="zoom:33%;" />
+<img src="./../images/image-20200912164452137.png" alt="image-20200912164452137" style="zoom:33%;" />
 
 Commitment schemes have some security properties.
 
@@ -153,6 +153,6 @@ We conclude this lecture talking about elliptic curves, which are the base of mo
 
 $y$ is present with only even exponents hence the curve is symmetric to axis $x$. Every line intersects the curve in 3 points. Exception: vertical lines that only intersect the curve at $O$, and tangents at inflection points. Tangent points have multiplicity 2.
 
-<img src="/home/weatherly/.config/Typora/typora-user-images/image-20200912171755758.png" alt="image-20200912171755758" style="zoom:33%;" />
+<img src="./../images/image-20200912171755758.png" alt="image-20200912171755758" style="zoom:33%;" />
 
 ~~slides 66-68~~
