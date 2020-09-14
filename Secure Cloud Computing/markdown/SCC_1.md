@@ -37,7 +37,7 @@ Finally, there are four <u>deployment models</u>:
 
 Recently a study has been published on how the different deployments models are distributed: most enterprises (>1k employees) use the Multi-Cloud approach which means that they do not rely on a single model but adopt multiple ones combined.
 
-<img src="/home/weatherly/.config/Typora/typora-user-images/image-20200907181054971.png" alt="image-20200907181054971" style="zoom: 33%;" />
+<img src="./../images/image-20200907181054971.png" alt="image-20200907181054971" style="zoom: 33%;" />
 
 We are looking into scenarios where data is outsourced and on this some computation must be done (<u>outsource computation</u>). The total market increases every year but typically the biggest issue with migration to cloud infrastructure is **security**.
 
@@ -102,7 +102,7 @@ CMKs can be <u>rotated</u>: disabled keys can still be used for decryption. This
 
 CMKs can be <u>deleted</u>: internally, CMK is completely disabled 7 days before actual deletion.
 
-![image-20200908100849852](/home/weatherly/.config/Typora/typora-user-images/image-20200908100849852.png)
+![image-20200908100849852](./../images/image-20200908100849852.png)
 
 ##### Key Hierarchy
 
