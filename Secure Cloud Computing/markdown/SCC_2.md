@@ -11,11 +11,19 @@ Of course the easy solution is downloading everything and then search locally, b
 - **search data content directly**, by scanning each single file (no storage overhead, since you only store data itself, but search time linear in the size of data);
 - **extract meta-data and create a db**, using a smarter data structure to complete operations (this needs to be updated and synced with data being uploaded, but is more efficient).
 
-`CryptDB` (2011) is the first example of combination between **encryption** and **an SQL-aware database**. This allows people to use the main SQL features to operate on encrypted data. The key should never leave the client and the technology should be working out-of-the-box.
+`CryptDB` (2011) is the first example of combination between **encryption** and **an SQL-aware database**. This allows people to use the main SQL queries to operate on encrypted data. The key should never leave the client (not even the cloud administrator has it to enhance client protection) and the technology should be working out-of-the-box (easy to adopt, it must be compatible with already existing applications).
 
-How does it work? Data is encrypted locally and then sent to the cloud service provider. Then the key must be stored and not leave the client, while data can be deleted. Whenever data is needed, SQL queries can be transformed and sent to the cloud, which will respond with an encrypted result set. Note: the cloud provider can still read the queries in plaintext.
+How does it work? Data is encrypted locally and then sent to the cloud service provider. Then the key must be stored and not leave the client, while data can be deleted. Whenever data is needed, SQL queries can be transformed by DB drivers and sent to the cloud, which will respond with an encrypted result set. Note: the cloud provider can still read the queries in plaintext.
 
-How to do this from a crypto point of view? Using **property-preserving encryption**, meaning that some properties of plaintexts are kept in ciphertexts. We can have **deterministic encryption (DET)**, meaning that the same plaintext leads to the same ciphertext (with the same key). While normally this is not good, in this context we need this to be able to search over encrypted data. We can also have **order-preserving encryption (OPE)** that, as the name suggests, will preserve order relations in ciphertexts (5 will generate a somehow larger ciphertext than 4). There is no need to understand the details, just know that these encryption schemes exist in real world. With additively homomorphic encryption, also summation queries are possible.
+How to do this from a crypto point of view? Using **property-preserving encryption** (PPE), meaning that some properties of plaintexts are kept in ciphertexts. We can have **deterministic encryption (DET)**, meaning that the same plaintext leads to the same ciphertext (with the same key, preserving the equality property). While normally this is not good (because it leaks information), in this context we need this to be able to search over encrypted data.
+$$
+Enc(A) = X, Enc(B) = Y : A = B \iff X = Y
+$$
+We can also have **order-preserving encryption (OPE)** that, as the name suggests, will preserve order relations in ciphertexts (5 will generate a somehow larger ciphertext than 4). 
+$$
+Enc(A) = X, Enc(B) = Y: A \leq B \iff X \leq Y
+$$
+There is no need to understand the details, just know that these encryption schemes exist in real world. With additively homomorphic encryption (e.g. Paillier Encryption Scheme), also summation queries are possible.
 
 What is basically done is that all the columns of the database are encrypted, using DET and/or OPE depending on the type of queries that we will need to run. Then the database will work normally, e.g.:
 
@@ -25,7 +33,7 @@ becomes
 
 `SELECT * FROM Deals WHERE Customer = E(Smith)`.
 
-Problem: the more you add "features" to your ciphertext, the more information you are leaking. E.g. OPE vs DET, one reveals order, the other allows equality checks. To tackle this, we can use **onion encryption**, named after the layered design. Once you need the given functionality, you peal the onion.
+Problem: the more "features" you add to your ciphertext, the more information you are leaking. E.g. OPE vs DET, one reveals order, the other allows equality checks. To tackle this, we can use **onion encryption**, named after the layered design. Once you need the given functionality, you peal the onion (but only at that time).
 
 ![image-20200915165103855](../images/image-20200915165103855.png)
 
@@ -33,9 +41,9 @@ Practically this is done by **sending keys** to the cloud provider and decryptin
 
 ##### Attacks on CryptDB
 
-We have just seen the shortcoming of this approach. Complete structure of plaintext is revealed at the first query: this of course helps with indexing, but we don't want the attacker to access that info. Leveraging on **background knowledge**, an attacker can reconstruct the content of the database even if it was encrypted. In 2016, a paper was published that showed for the first time how to effectively attack CryptDB. Very simply, it is enough to sort the known distribution of data and generate a histogram for that, which will reveal information when compared to a histogram generated from the database. The most frequent value from the known distribution will map to the most frequent ciphertext and so on.
+We have just seen the shortcoming of this approach. Complete structure of plaintext is revealed at the first query: this of course helps with indexing, but we don't want the attacker to access that info. Leveraging on **background knowledge** (e.g. data with similar structure, same distribution over plaintexts or from a previous data breach), an attacker can reconstruct the content of the database even if it was encrypted. In 2016, a paper was published that showed for the first time how to effectively attack CryptDB (exploiting a frequency attack). Very simply, it is enough to sort the known distribution of data (in auxiliary information) and generate a histogram for that, which will reveal information when compared to a histogram generated from the database (so from the encrypted data). The most frequent value from the known distribution will map to the most frequent ciphertext and so on.
 
-Another attack is possible against OPE, assuming a **dense dataset** as plaintext, simply consists of mapping the values to the ciphertexts according to their order.	
+Another attack is possible against OPE, assuming a **dense dataset** as plaintext (complete plaintext space is encrypted), simply consists of mapping the values to the ciphertexts according to their order.
 
 To conclude, PPE is still being used nowadays, since it is so easy to adopt in DBMS. However, OPE is not used because there is no standard scheme to do that and because it leaks more than DET. Security is debatable as we have seen, because if an attacker has background info they can reconstruct a lot of stuff.
 
