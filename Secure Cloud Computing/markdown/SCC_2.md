@@ -11,11 +11,19 @@ Of course the easy solution is downloading everything and then search locally, b
 - **search data content directly**, by scanning each single file (no storage overhead, since you only store data itself, but search time linear in the size of data);
 - **extract meta-data and create a db**, using a smarter data structure to complete operations (this needs to be updated and synced with data being uploaded, but is more efficient).
 
-`CryptDB` (2011) is the first example of combination between **encryption** and **an SQL-aware database**. This allows people to use the main SQL features to operate on encrypted data. The key should never leave the client and the technology should be working out-of-the-box.
+`CryptDB` (2011) is the first example of combination between **encryption** and **an SQL-aware database**. This allows people to use the main SQL queries to operate on encrypted data. The key should never leave the client (not even the cloud administrator has it to enhance client protection) and the technology should be working out-of-the-box (easy to adopt, it must be compatible with already existing applications).
 
-How does it work? Data is encrypted locally and then sent to the cloud service provider. Then the key must be stored and not leave the client, while data can be deleted. Whenever data is needed, SQL queries can be transformed and sent to the cloud, which will respond with an encrypted result set. Note: the cloud provider can still read the queries in plaintext.
+How does it work? Data is encrypted locally and then sent to the cloud service provider. Then the key must be stored and not leave the client, while data can be deleted. Whenever data is needed, SQL queries can be transformed by DB drivers and sent to the cloud, which will respond with an encrypted result set. Note: the cloud provider can still read the queries in plaintext.
 
-How to do this from a crypto point of view? Using **property-preserving encryption**, meaning that some properties of plaintexts are kept in ciphertexts. We can have **deterministic encryption (DET)**, meaning that the same plaintext leads to the same ciphertext (with the same key). While normally this is not good, in this context we need this to be able to search over encrypted data. We can also have **order-preserving encryption (OPE)** that, as the name suggests, will preserve order relations in ciphertexts (5 will generate a somehow larger ciphertext than 4). There is no need to understand the details, just know that these encryption schemes exist in real world. With additively homomorphic encryption, also summation queries are possible.
+How to do this from a crypto point of view? Using **property-preserving encryption** (PPE), meaning that some properties of plaintexts are kept in ciphertexts. We can have **deterministic encryption (DET)**, meaning that the same plaintext leads to the same ciphertext (with the same key, preserving the equality property). While normally this is not good (because it leaks information), in this context we need this to be able to search over encrypted data.
+$$
+Enc(A) = X, Enc(B) = Y : A = B \iff X = Y
+$$
+We can also have **order-preserving encryption (OPE)** that, as the name suggests, will preserve order relations in ciphertexts (5 will generate a somehow larger ciphertext than 4). 
+$$
+Enc(A) = X, Enc(B) = Y: A \leq B \iff X \leq Y
+$$
+There is no need to understand the details, just know that these encryption schemes exist in real world. With additively homomorphic encryption (e.g. Paillier Encryption Scheme), also summation queries are possible.
 
 What is basically done is that all the columns of the database are encrypted, using DET and/or OPE depending on the type of queries that we will need to run. Then the database will work normally, e.g.:
 
@@ -25,7 +33,7 @@ becomes
 
 `SELECT * FROM Deals WHERE Customer = E(Smith)`.
 
-Problem: the more you add "features" to your ciphertext, the more information you are leaking. E.g. OPE vs DET, one reveals order, the other allows equality checks. To tackle this, we can use **onion encryption**, named after the layered design. Once you need the given functionality, you peal the onion.
+Problem: the more "features" you add to your ciphertext, the more information you are leaking. E.g. OPE vs DET, one reveals order, the other allows equality checks. To tackle this, we can use **onion encryption**, named after the layered design. Once you need the given functionality, you peal the onion (but only at that time).
 
 ![image-20200915165103855](../images/image-20200915165103855.png)
 
@@ -33,37 +41,39 @@ Practically this is done by **sending keys** to the cloud provider and decryptin
 
 ##### Attacks on CryptDB
 
-We have just seen the shortcoming of this approach. Complete structure of plaintext is revealed at the first query: this of course helps with indexing, but we don't want the attacker to access that info. Leveraging on **background knowledge**, an attacker can reconstruct the content of the database even if it was encrypted. In 2016, a paper was published that showed for the first time how to effectively attack CryptDB. Very simply, it is enough to sort the known distribution of data and generate a histogram for that, which will reveal information when compared to a histogram generated from the database. The most frequent value from the known distribution will map to the most frequent ciphertext and so on.
+We have just seen the shortcoming of this approach. Complete structure of plaintext is revealed at the first query: this of course helps with indexing, but we don't want the attacker to access that info. Leveraging on **background knowledge** (e.g. data with similar structure, same distribution over plaintexts or from a previous data breach), an attacker can reconstruct the content of the database even if it was encrypted. In 2016, a paper was published that showed for the first time how to effectively attack CryptDB (exploiting a frequency attack). Very simply, it is enough to sort the known distribution of data (in auxiliary information) and generate a histogram for that, which will reveal information when compared to a histogram generated from the database (so from the encrypted data). The most frequent value from the known distribution will map to the most frequent ciphertext and so on.
 
-Another attack is possible against OPE, assuming a **dense dataset** as plaintext, simply consists of mapping the values to the ciphertexts according to their order.	
+Another attack is possible against OPE, assuming a **dense dataset** as plaintext (complete plaintext space is encrypted), simply consists of mapping the values to the ciphertexts according to their order.
 
-To conclude, PPE is still being used nowadays, since it is so easy to adopt in DBMS. However, OPE is not used because there is no standard scheme to do that and because it leaks more than DET. Security is debatable as we have seen, because if an attacker has background info they can reconstruct a lot of stuff.
+To conclude, PPE is still being used nowadays, since it is so easy to adopt in DBMS (DataBase Management Systems). However, OPE is not used because there is no standard scheme to do that and because it leaks more than DET. Security is debatable as we have seen, because if an attacker has background info they can reconstruct a lot of information.
 
-#### SSE
+#### Searachable Symmetric Encryption
 
-Instead of PPE, that unveils data after the first queries, the ideal solution would use **randomized encryption** but would still allow us to run some functions. This can be realized with **functional encryption**. The idea is to use randomized encryption, but the client can use a **function token** to generate a token, send it to the cloud and let it evaluate some queries. This evaluation function guarantees security to the values that have not been evaluated, but causes a bit of performance loss.
+Instead of PPE, that unveils data after the first queries, the ideal solution would use **randomized encryption** but would still allow us to run some functions. This can be realized through **functional encryption** by revealing additional information only if required. The idea is to use randomized encryption, but the client can use a **function token** to generate (together with the key) a token, send it to the cloud and let it evaluate some queries. This evaluation function guarantees security to the values that have not been evaluated, but causes a bit of performance loss (no pre-processing possible, no quality checks but the function must be rewritten according to the evaluation algorithm).
 
-Remember **pseudorandom functions (PRF)**: a recognizer cannot distinguish the difference between the generated numbers and true randomness. First example of searchable encryption was published in 2000 (11 years before CryptDB!). You can encrypt with a quite simple procedure, adding randomness to avoid determinism. The steps are as follows:
+Remember **pseudorandom functions (PRF)**: a recognizer cannot distinguish the difference between the generated numbers and true randomness.
 
-- Generate a random key $K$;
+First example of searchable encryption was published in 2000 (11 years before CryptDB!). You can encrypt with a quite simple procedure, adding randomness to avoid determinism. The steps are as follows:
+
+- Generate a random bit string key $K$ suitable for the PRF;
 - split the document to encrypt in several keywords ($p_1, ..., p_n$);
-- for each $p_i$:
-  - use the PRF to calculate $\tau_{p_i} = F_k(p_i)$;
+- for each $p_i$: 
+  - use the PRF to calculate $\tau_{p_i} = F_k(p_i)$ (with the same key and same $p_i$ the result of the encryption is the same);
   - generate random value $l$;
   - use the PRF to calculate $F_{\tau_{p_i}}(l)$;
   - the final ciphertext is $c_i = l\ ||\ F_{\tau_{p_i}}(l)$.
 
 As you can see, this encryption scheme ensure non-determinism, thanks to the random value $l$. Data encrypted in this way can be sent to the cloud provider and it will not be able to build any histogram out of it.
 
-How can you search on data instead? You can get the search-token again, by using your key ($\tau_{p_i} = F_k(p_i)$); then, you send it to the cloud and the provider will try recomputing $F_{\tau_{p_i}}(l)$ for each entry, checking if it matches the second part of the ciphertext. There is no way to decrypt in this simplified version: however, it is normal to consider searchable encryption only with the purpose of retrieving data from a remote database; then you can still use this method to handle already encrypted data (with a super secure AES) as plaintext, that in this way can get indexed. 
+How can you search on data instead? Suppose we want to search for the word $p_i$. You can get the search-token again, by using your key ($\tau_{p_i} = F_k(p_i)$); then, you send it to the cloud and the provider will try recomputing $F_{\tau_{p_i}}(l)$ for each entry, checking if it matches the second part of the ciphertext. There is no way to decrypt in this simplified version: however, it is normal to consider searchable encryption only with the purpose of retrieving data from a remote database; then you can still use this method to handle already encrypted data (with a super secure AES) as plaintext, that in this way can get indexed. 
 
 ##### Structured encryption
 
-Structured encryption takes a step forward with respect to functional encryption. Instead of considering each plaintext individually, structured encryption takes a full data collection and together with the key it generates an **encrypted search index**. Similarly to the previous case, it is possible to generate a token and retrieve some results, that are not complete data, but extracted keywords that can point to the right encrypted payload to be downloaded and decrypted afterwards.
+Structured encryption takes a step forward with respect to functional encryption. Instead of considering each plaintext individually, structured encryption takes a full data collection and together with the secret key it generates an **encrypted search index**. Similarly to the previous case, it is possible to generate a token and retrieve some results, that are not complete data, but extracted keywords that can point to the right encrypted payload to be downloaded and decrypted afterwards.
 
 ![image-20200915215259361](../images/image-20200915215259361.png)
 
-The first idea of this document index was introduced in 2005. It consists of having a plaintext dictionary with some keywords $U = {p_1, \dots p_m}$ and a set of documents $D = {d_1, \dots d_n}$ containing these keywords. The cloud provider knows the underlining universe, so the first step is the application of a permutation function to the initial dictionary, so that it will be no longer possible to understand at which position the corresponding ciphertext resides. Then, for each document, a bitarray is created, indicating whether the keyword is contained in the document. After that, these bitarrays are encrypted with two pseudorandom functions $F$ and $G$, one using a new key $K_2$ and the other using the result from the first as key. The importance of $G$ is the fact that it makes the bitarrays vary between different documents. Finally, the second value is xored with the initial bit of the array, creating a new bitarray (for each document), that is sent to the server. In formal steps:
+The first idea of this document index was introduced in 2005. It consists of having a plaintext dictionary with some keywords $U = {p_1, \dots p_m}$ and a set of documents $D = {d_1, \dots d_n}$ containing these keywords. The cloud provider knows the underlining universe, so the first step is the application of a permutation function to the initial dictionary using a PseudoRandom Procedure $\Pi$ and key $K_1$, so that it will be no longer possible to understand at which position the corresponding ciphertext resides. Then, for each document $d_j$, a bitarray is created, indicating whether the keyword $p_i$ is contained in the document. After that, these bitarrays are encrypted bitwise (for each keyword) with two pseudorandom functions $F$ and $G$, one using a new key $K_2$ and the other using the result from the first as key. The importance of $G$ is the fact that it makes the bitarrays vary between different documents. Finally, the second value is xored with the corresponding bit of the initial bitarray, creating a new bitarray (for each document), that is sent to the server. In formal steps:
 
 - Permute dictionary using pseudorandom permutation $\prod$ and key $K_1$:
 - For each document $d_j$, create bitarray $I_j$;
@@ -73,13 +83,13 @@ The first idea of this document index was introduced in 2005. It consists of hav
   - Set $E_j[i] = I_j[i]\ \oplus G_{r_i}(j)$;
 - Send each $E_j$ to the server.
 
-To search on this index, calculate the permuted index $\pi = \prod_{K_1}(i)$, then calculate the token as $F_{K_2}(i) = \tau$ and send $\pi, \tau$ to the server. As a response, for each document, the server will reverse the masking operation (reverting the XOR) and return the bit at the index of the keyword we are looking for. 
+To search on this index, calculate the permuted index $\pi = \prod_{K_1}(i)$, then calculate the search token as $F_{K_2}(i) = \tau$ and send $\pi, \tau$ to the server. As a response, for each document, the server will reverse the masking operation (reverting the XOR) and return the bit at the index of the keyword we are looking for ($E _j π ⊕ G _τ (j) = I _j [π]$). 
 
 *In the end, the server sees the real bitarray with enough queries. Why are we doing such complex operations then, if ultimately the server will read the unmasked values? Can't we leave them as they are instead of going with XOR, PRF etc? Maybe because we will never do so many queries to unveil the whole bitarrays?* 
 
-Talking about performances, the first solution is linear in the number of encrypted keywords (it needs to search a match in every generated chunk). while the second is linear in the number of files (it needs to access each bitarray). The former is definitely not good, as usually you want to store **big data** in the cloud and you have a lot of keywords. The latter is better, but the best would be depending only on result set size.
+Talking about performances, the first solution is linear in the number of encrypted keywords (it needs to search a match in every generated chunk). While the second is linear in the number of files (it needs to access each bitarray). The former is definitely not good, as usually you want to store **big data** in the cloud and you have a lot of keywords. The latter is better, but the best would be depending only on result set size.
 
-In order to achieve the optimal performance, we need to build a **reverted index**, as proposed in [CGK+06]. We can create a dictionary with the keywords as keys and documents as values. This dictionary can be implemented as a hash table, hence access costs constant time. The idea is that you have this hash table giving the entry point for the keyword, then you build this large scrambled array with embedded linked lists that underline the lists of the various keywords. 
+In order to achieve the optimal performance, we need to build a **reverted index**, as proposed in [CGK+06]. We can create a dictionary with the keywords as keys and documents as values. This dictionary can be implemented as a hash table, hence access costs constant time. The idea is that you have this hash table giving the entry point for the keyword (aka the inverted table), then you build this large scrambled array with embedded linked lists that underline the lists of the various keywords. 
 
 More concretely, the index can be constructed in the following way:
 
@@ -90,21 +100,24 @@ More concretely, the index can be constructed in the following way:
   - for each document $D_j$, containing keyword $w_i$:
     - generate key $K_{i, j}$;
     - create node $N_{i, j} = <id(j)\ ||\ K_{i, j}\ ||\ \psi_K(ctr + 1)>$ (i.e. \<identifier of $D_j$, key for the next cell, position of the next cell>);
-    - final array is $A[\psi_K(ctr)] = E_{K_{i,j-1}}(N_{i,j})$, so save every node at permuted position, encrypting it with the previous key.
+    - final array is $A[\psi_K(ctr)] = Enc_{K_{i,j-1}}(N_{i,j})$, so save every node at permuted position, encrypting it with the previous key.
 - to build the inverted index for keys and entry points:
   - permute lookup table using PRP (so the adversary does not know which cell corresponds to which keyword);
-  - encrypt each table entry as $<index_A(N_i, 1)\ ||\ K_{i, 0}> \oplus\ f_K(w_i)$, representing the index of the first result for keyboard $i$ in the array $A$ and the key to decrypt it;
-  - fill the table respecting the permuted positions.
+  - encrypt with a PRF each table entry as $<index_A(N_i, 1)\ ||\ K_{i, 0}> \oplus\ f_K(w_i)$, representing the index of the first result for keyboard $i$ in the array $A$ and the key to decrypt it;
+  - fill the table respecting the permuted positions and send the arrays to the server in this encrypted form.
 
 Searching at this point is straightforward: we first reapply the permutation to access the right position of the table, then we decrypt the value and we traverse the linked list within the array, always decrypting with the last key received. With this solution, nothing is leaked for non-queried keywords.
 
-How can you proof that this actually works and that it has the properties that we mentioned? First of all, we need a framework to analyze these encryption schemes: we can no longer use the idea of chosen-plaintext et simila, because we are in a scenario in which the attacker learns about our data progressively. What is usually used is a "security game" in which you have a distinguisher and challenger. The former sends messages to the latter, which can communicate with two "boxes", representing the real protocol and the simulated protocol. When communicating with the real protocol, the challenger sends real data collection and queries and receives encrypted index and tokens; when communicating with the simulated one instead, it sends data collection leakage and queries leakage - determined by a special leakage function that we will see later, that replies with simulated index and token. Finally, the distinguisher needs to understand if the challenger talked with the real or simulated protocol. The distinguisher can work in adaptive or non-adaptive way, that is, receiving data on multiple (and potentially optimized) iterations or just once at the beginning. The former is obviously more powerful than the latter.
+How can you proof that this actually works and that it has the properties that we mentioned? First of all, we need a framework to analyze these encryption schemes: we can no longer use the idea of chosen-plaintext et simila, because we are in a scenario in which the attacker learns about our data (the outcome of the search queries) progressively. What is usually used is a "security game" in which you have a **distinguisher** and **challenger**. The former sends messages to the latter, which can communicate with two "boxes", representing the real protocol and the simulated protocol (he chooses randomly each time to which one communicate). When communicating with the real protocol, the challenger sends real data collection and queries and receives encrypted index and tokens; when communicating with the simulated one instead, it sends data collection leakage and queries leakage - determined by a special leakage function that we will see later - and the simulated protocol replies with simulated index and token. Finally, the distinguisher needs to understand if the challenger talked with the real or simulated protocol. The distinguisher can work in adaptive or non-adaptive way, that is, receiving data on multiple (and potentially optimized) iterations or just once at the beginning in a single batch. The former is obviously more powerful than the latter since it can use the previously learned results to construct the following query and obtain more information (e.g. craft queries that contradict each other and see what happens with the corresponding tokens).
 
-How are leakage functions defined then? The proof the security of a schema is bounded to this leakage function, which needs to be defined and represents a constraint. Common functions for data collection leak are the number of documents, the length of each document or the number of keywords, while the ones for query leakage can reveal patterns in search or access. These common leakages are not universal and they depend on the underlining protocol. Every protocol is usually proven with different functions and it cannot be said that one is better than another.
+How are leakage functions defined then? The security proof of a schema is bounded to this leakage function, which needs to be defined and represents a constraint. Concretely, we can think of leakage functions as the information that we assume the attacker will get to know by simply observing our protocol. Common functions for data collection leak are the number of documents, the length of each document or the number of keywords, while the ones for query leakage can reveal patterns in search (what queries are for the same keyword) or access (what documents are returned as query results). These common leakages are not universal and they depend on the underlining protocol. Every protocol is usually proven with different functions and it cannot be said that one is better than another.
 
 Then, the security proof is defined as follows:
 
-> a protocol is secure, if the distinguisher has negligible chance to decide what box has been chosen by the challenger.
+> A protocol is secure, if the distinguisher has negligible chance to decide what box has been chosen by the challenger.
+> $$
+> |Pr[Real_A(k) = 1] - Pr[Ideal_{A,S}(k) = 1]| \leq negl(k)
+> $$
 
 The proof is conducted with these steps:
 
@@ -112,7 +125,7 @@ The proof is conducted with these steps:
 - construct a simulator for the protocol with that function;
 - prove that a distinguisher has small probability to distinguish, using cryptographic reduction (i.e. with leakage underlining crypto can be broken). 
 
-This might be quite unclear, so let us have a practical example or a security proof. We want to proof non-adaptive security of the reverted index model. We define the leakage function on data collection ($L_1$) as both the number of documents and the number of distinct keywords. This is quite intuitive, since the number of documents is exactly the number of encrypted payloads sent to the cloud, while the number of distinct keywords is the number of keys in the index dictionary. Then, the query leakage function ($L_2$) allows the attacker to see the matching document IDs and the same search queries. Intuitively, this does also make sense: given the construction of the protocol and how it does encryption, these details can be leaked. Finally, the claim is that (note that it is dependent on leakage functions):
+This might be quite unclear, so let us have a practical example or a security proof. We want to proof non-adaptive security of the reverted index model. We define the leakage function on data collection ($L_1$) as both the number of documents ($\#D$) and the number of distinct keywords ($\#\delta(D)$). This is quite intuitive, since the number of documents is exactly the number of encrypted payloads sent to the cloud, while the number of distinct keywords is the number of keys in the index dictionary. Then, the query leakage function ($L_2$) allows the attacker to see the matching document IDs and the same search queries. Intuitively, this does also make sense: given the construction of the protocol and how it does encryption, these details can be leaked. Finally, the claim is that (note that it is dependent on leakage functions):
 
 > If:
 >
@@ -126,16 +139,16 @@ We build the simulated protocol with the following steps.
 
 - Initialize empty array $\tilde{A}$;
 - For all sets of documents in access pattern leak and all the queries in search pattern leak:
-  - Generate initial query key;
+  - Generate initial query key $K_{i,0}$ for query $q_i$;
   - Randomly fill the array with encryptions of matching IDs (same as original protocol, but cells are randomly positioned);
-  - Fill the rest with random values.
-- Build a lookup table and fill it with values similarly constructed, but with random components to substitute unknown data.
+  - Fill the remaining cells with random values.
+- Build a simulated lookup table and fill it with values similarly constructed, but with random components to substitute unknown data.
 
 At this point, how can the distinguisher spot the difference between the two boxes? With the arrays, in the real protocol we use PRF and PRP with the real indexes, while in the simulated version we go directly with random positions. This cannot be distinguished, since we are assuming that our pseudorandom primitives are reliable. Same happens with the actual content of the array. The same situation is repeated with the lookup table: to break our scheme the attacker would have to break the underlining cryptographic functions, which are assumed to be secure. Finally, also tokens contain a random component in both cases, so the simulated ones cannot be spotted.
 
 To sum up, a security proof starts from the definition of leakage functions, then the creation of the simulator and finally it is completed by showing that the distinguisher cannot successfully find out which protocol the simulator has communicated with (and why). 
 
-We have now proved non-adaptive security, which is easier, because the simulator knows the access pattern for all queries during the index simulation. With adaptive security instead, we would need to change leakage assumptions and give access to all indexed keywords in the data collection leakage (hence resulting in nothing better than deterministic encryption), or using as cryptographic base a programmable random oracle model.
+We have now proved non-adaptive security, which is easier, because the simulator knows the access pattern for all queries during the index simulation (which cells will be accessed later by the queries). With adaptive security instead, we would need to change leakage assumptions and give access to all indexed keywords in the data collection leakage (hence resulting in nothing better than deterministic encryption), or using as cryptographic base a programmable random oracle model.
 
 
 
