@@ -57,3 +57,12 @@ When the client wants to access a certain block then he downloads all tuples, de
 This trivial construction is not so useful since communication is linear in data size and also client storage is (then why doesn't the client store everything on his side? There is no point in outsourcing with this implementation). It might be easier to decrease the storage by streaming the data (block per block, but all block are streamed otherwise timings attacks are possible) and block are decrypted individually on client side. When the right block is received, the client access it, performs the operation needed, re-encrypts the data and uploads it again.
 
 A requirement for a useful ORAM is that communication complexity must be sub-linear in data size. But how?
+
+First proposal in 1996: they divided the storage in a shelter and virtual memory. The latter contains real values and dummies and each address is accessed at most once. The shelter is a sort of cache for accessed data: after each access, the shelter is updated and streamed completely to the client. The trick is to defined their sizes so that the communication complexity is sub-linear. The shelter must be sublinear in data size since it's streamed completely.
+
+What happens if all virtual memory addresses have been accessed? Or what happens if the shelter is full? The idea is that the virtual memory layout is valid only for one epoch and then it's changed. Every now and then, the whole table is downloaded, re-encrypted (permuted) and uploaded again.
+
+Let's look at the details:
+
+- Each epoch lasts $\sqrt n$ data access operations. After one epoch is passed, obliviously permute memory and then perform actual data access operations. For the data access operation, read the complete shelter linearly (download, read, re-encrypt and upload again). If the memory block is found in the shelter, then access a dummy element stored in $a_i+cnt$ in the memory layout and download it. Shelter is then re-encrypted linearly and the value is added if it was not in the shelter before. Finally, $cnt= cnt +1$ (this cnt is used for non predictability). If instead, the value is not found in the shelter then the real element in $a_i$ is accessed. The following steps are the same. From the attacker perspective, shelter hit or miss doesn't look different. After the $\sqrt n$ access operation, the complete memory is updated in an oblivious way.
+
