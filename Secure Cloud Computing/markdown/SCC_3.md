@@ -66,3 +66,15 @@ Let's look at the details:
 
 - Each epoch lasts $\sqrt n$ data access operations. After one epoch is passed, obliviously permute memory and then perform actual data access operations. For the data access operation, read the complete shelter linearly (download, read, re-encrypt and upload again). If the memory block is found in the shelter, then access a dummy element stored in $a_i+cnt$ in the memory layout and download it. Shelter is then re-encrypted linearly and the value is added if it was not in the shelter before. Finally, $cnt= cnt +1$ (this cnt is used for non predictability). If instead, the value is not found in the shelter then the real element in $a_i$ is accessed. The following steps are the same. From the attacker perspective, shelter hit or miss doesn't look different. After the $\sqrt n$ access operation, the complete memory is updated in an oblivious way.
 
+The main problem is that memory updated should happen with limited memory consumption on client side: how? The authors implemented an **Oblivious Permutation** using PRF: how to implement PRP $\prod: \{0...n\} \rightarrow \{0...n\}$ with $O(\log n)$ storage on client side (where $n = m + \sqrt m$ that is the size of the actual memory + dummy values)?
+
+The idea is to use PRP mapping from $\{0...n\} \rightarrow T_n$ where $T_n$ is a larger set to minimize collisions. Tags for the elements are drawn at random from the previous set. Then to permute the virtual addresses, we sort them according to the virtual tags and since they are generated using a PRF then they can be considered random resulting in the order of the virtual addresses to be random too. Permutation can be implemented through oblivious sorting.
+
+There is an algorithm (nominally, Batcher's sorting network) to perform sorting in place (constant size of temporary memory) and this is what is done with ORAM. This algorithm implements the permutation in $O(n\log (n)^2)$. 
+
+When a virtual address $v$ is to be accessed, then the tag for $\tau(v)$ is calculated and a binary search over the permuted memory is performed (logarithmic in the number of elements).
+
+At the end of each epoch we have a stash including $\sqrt n$ values, and we want to update the memory and empty the stash again. The first step is to replace virtual addresses $a_i$ of dummies with $\infin$. An additional bit $\sigma$ is added to the tuple to indicate whether the value is stored in the shelter ($\sigma = 0$, most recent values) or in the permuted memory ($\sigma = 1$). Then, sort according to tuple $(a_i,\sigma)$. For duplicates mark the second occurrence as dummy value and replace its virtual address with $\infin$. 
+
+1:06:00
+
