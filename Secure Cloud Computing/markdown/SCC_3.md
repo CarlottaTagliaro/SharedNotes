@@ -1,6 +1,6 @@
 # SCC 3
 
-## Attacking SSE and Oblivious RAM
+## Attacking SSE
 
 Can the leakage of SSE be exploited to attack such schemes? In the (very) long run, SSE results as secure as deterministic encryption. For each query sent to the service provider, the latter learns the token hence learns the result. As soon as all possible keywords are queried then all result sets (and frequencies) are unveiled.
 
@@ -31,3 +31,29 @@ A research proposed what is called *Forward private SSE*: previous search tokens
 
 The idea behind Forward private SSE is to have different versions of search index and keep track of the current version. A new file $F_x$ is added according to current version $v$ using the update token $\mu_{F_x}^v$. Search tokens $\tau_q^o$ of older versions ($o<v$) are incompatible and when a new search operation is performed, then the version is increased. This can be implemented quite easily by using RSA encryption scheme with changed functionality of the keys: the secret key is used to encrypt the index while the public key will be used to decrypt it and go back to the previous history.
 
+## Oblivious Random Access Machine
+
+The general idea is to model a simple memory interface. Client A want to outsource data (partitioned in blocks, each identified by a unique address $a_i$) in encrypted form to the service provider. The client can then either read or write from a stated memory address. This model has been proposed in 1996 about SW protection: small trusted party in CPU un-accessible (hiding how the internal program works). Applied to today's world the trusted environment is the client and the untrusted party is the cloud service provider. 
+
+The server should not be able to learn information about which data is being accessed (access pattern), age of data (and when it was last accessed), whether the same data is being accessed again, etc.
+
+Formally, the previous security goals can be defined as follows:
+
+Let $\overrightarrow{y} = ((o_M,a_M,d_M),...,(o_1,a_1,d_1))$ denote a data <u>request</u> sequences where $o_i$ denotes a read\write operation, $a_i$ denotes the address of the block being accessed, $d_i$ denotes the data being written. 
+
+Let $A(\overrightarrow{y})$ denote the (possibly randomized) sequence of <u>accesses</u> to the remote storage given the sequence of data requests. An ORAM is secure if for any two data sequences $\overrightarrow{y}$ and $\overrightarrow{z}$ of the same length, $A(\overrightarrow{y})$ and $A(\overrightarrow{z})$ are computationally indistinguishable.
+
+Let's see some of the fundamentals of ORAMs:
+
+- **Virtual address**: the address $a_i$ stated by the client (to define the block he is interested in);
+- **Virtual data value**: either a real data value $d_i$ or empty (dummy) block, denoted as $\bot$ (handy when doing read operations, always simulate a write operation but with dummy data);
+- **Actual storage**: the storage address accessed at server side;
+- **Actual value**: the encrypted value stored at server side.
+
+Let's see how to build such a model: we permute all the data blocks that we want to outsource (together with their data addresses), encrypt them and outsource the tuples. Each tuple consists of a virtual address and virtual data.
+
+When the client wants to access a certain block then he downloads all tuples, decrypt them, search locally and write (if write operation is performed) or read. Then the client samples a new key, re-encrypt the tuples and upload the new version. Since those two versions are completely different, as an attacker I am not able to define which type of access has been performed (and the attacker doesn't even see any modification on the data).
+
+This trivial construction is not so useful since communication is linear in data size and also client storage is (then why doesn't the client store everything on his side? There is no point in outsourcing with this implementation). It might be easier to decrease the storage by streaming the data (block per block, but all block are streamed otherwise timings attacks are possible) and block are decrypted individually on client side. When the right block is received, the client access it, performs the operation needed, re-encrypts the data and uploads it again.
+
+A requirement for a useful ORAM is that communication complexity must be sub-linear in data size. But how?
