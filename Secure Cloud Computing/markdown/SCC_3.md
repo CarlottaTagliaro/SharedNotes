@@ -74,7 +74,27 @@ There is an algorithm (nominally, Batcher's sorting network) to perform sorting 
 
 When a virtual address $v$ is to be accessed, then the tag for $\tau(v)$ is calculated and a binary search over the permuted memory is performed (logarithmic in the number of elements).
 
-At the end of each epoch we have a stash including $\sqrt n$ values, and we want to update the memory and empty the stash again. The first step is to replace virtual addresses $a_i$ of dummies with $\infin$. An additional bit $\sigma$ is added to the tuple to indicate whether the value is stored in the shelter ($\sigma = 0$, most recent values) or in the permuted memory ($\sigma = 1$). Then, sort according to tuple $(a_i,\sigma)$. For duplicates mark the second occurrence as dummy value and replace its virtual address with $\infin$. 
+At the end of each epoch we have a stash including $\sqrt n$ values, and we want to update the memory and empty the stash again. The first step is to replace virtual addresses $a_i$ of dummies with $\infin$. An additional bit $\sigma$ is added to the tuple to indicate whether the value is stored in the shelter ($\sigma = 0$, most recent values) or in the permuted memory ($\sigma = 1$). Then, sort according to tuple $(a_i,\sigma)$. For duplicates mark the second occurrence (the one stored in the permuted memory, not the ones in the shelter since those are the most recent) as dummy value and replace its virtual address with $\infin$. Then we apply the sorting algorithm again by virtual address, removing $\sigma$. We remove all the dummy elements and a new epoch starts. 
 
-1:06:00
+What is the communication overhead of this construction? For each epoch, three operations take place: permutation ($O(n(\log n)^2)$), data access for the complete period ($O(\sqrt n)$) and the memory update ($O(n(\log n)^2)$). The most expensive operations only appear once during the process (i.e. at the beginning and at the end of an epoch) so these are amortized so we divide their value by $\sqrt n$ and we obtain that the complexity is $O(\sqrt n (\log n)^2)$ per access. 
 
+It was even possible to achieve logarithmic communication with more than constant memory storage. Memory storage is increased but then complexity is reduced: blocks are organized in a virtual tree with the following characteristics:
+
+- $N$: number of data blocks;
+- $Z$: bucket (node) size, each bucket can contain multiple data blocks;
+- $L$: tree height ($=\lceil \log N \rceil$);
+- $2^L$: number of leaves;
+- $2^{L+1}-1$: number of buckets.
+
+Each address is mapped to a random leaf in the tree:
+
+- $Path(x)$: from leaf node $x$ to root, outputs the path;
+- $Path(x,l)$: bucket at level $l$ along the path, returns the specific bucket on the corresponding level.
+
+The idea is to introduce "client storage": it contains a position map mapping a block with address $a_i$ to a leaf $x$. Then the stash is used to contain blocks from overflowing buckets locally (temporally) at client side (in fact buckets may overflow during the access protocol).
+
+How does the access protocol work? The client wants to store data somewhere on the path to assigned leaf $Path(position[a])$. The client looks for the mapping to understand which leaf is associated to the virtual address and reads all the buckets on the path to stash (logarithmic in data size). The access to the actual target block is performed on the stash and then the stash is emptied again and the block is written again in the corresponding bucket (previously of course, this is encrypted with a new key so that the attacker cannot distinguish which blocks have been accessed and/or modified).
+
+If done in this way, the attacker can observe the bucket access pattern meaning that if we have two different paths, then the attacker can say for sure that those path contained different addresses. What is added is that at each access operation there is a reshuffle of the position map so that each path is different for each operation even when accessing the same block.
+
+There is one problem with this approach: the client need to keep track of the position map ($O(n \log n)$) but we wanted a sublinear memory size on the client side, it requires too much storage. So the position map is stored recursively in ORAM (I can store multiple position mappings in one block compressing the needed storage) saving memory on client side.
