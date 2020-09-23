@@ -2,22 +2,22 @@
 
 ## Attacking SSE
 
-Can the leakage of SSE be exploited to attack such schemes? In the (very) long run, SSE results as secure as deterministic encryption. For each query sent to the service provider, the latter learns the token hence learns the result. As soon as all possible keywords are queried then all result sets (and frequencies) are unveiled.
+Can the leakage of SSE be exploited to attack such schemes? In the (very) long run, SSE results as secure as deterministic encryption. For each query sent to the service provider, the latter can store the token together with the result set. As soon as all possible keywords are queried then all result sets (and frequencies) are unveiled.
 
-This problems is recognized by the research community: they tried to define attacks on SSE with the goal of recovering the keywords given the tokens. The idea is that, as soon as an attacker knows which keyword is behind a certain token (and the corresponding result set) then the attacker learns the content of matching documents. The attack strategy is quite straightforward: use background information about the data collection and then mount attacks similar to the ones to PPE but with an incomplete picture (assuming that the attacker has not seen the complete keywords queries yet).
+This problems is recognized by the research community: they tried to define attacks on SSE with the goal of recovering the keywords given the tokens. The idea is that, as soon as an attacker knows which keyword is behind a certain token (and the corresponding result set) then the attacker learns the content of matching documents. The attack strategy is quite straightforward: use background information about the data collection and then mount attacks similar to the ones to PPE (reminder, Property-Preserving Encryption) but with an incomplete picture (assuming that the attacker has not seen the complete keywords queries yet).
 
 Two possible attacks are present:
 
-- Passive attacks: passive observation of queries and their corresponding results (combining that info with the background info)
-- Active attacks: the attacker can inject files in the index and exploit this additional knowledge to extract info in a faster way. 
+- Passive attacks, only via passive observation of queries and their corresponding results (combining that info with the background info);
+- Active attacks, in which the attacker can inject files in the index and exploit this additional knowledge to extract info in a faster way. 
 
 ### Co-Occurrence attacks
 
-The very first attack on SSE is stated in 2011 and the general idea is similar to attacks to PPE. The idea behind **Co-Occurrence attacks** is that instead of counting the frequencies of each individual keyword, we observe the co-occurrence of two keywords. Not all keywords will occur in combination with the same probability. What is define as attack is the probability that two keywords $a,b$ appear in one document: $|D[a] \cap D[b]| \setminus  | D|$
+The very first attack on SSE was presented in 2011 and the general idea is similar to attacks to PPE. The idea behind **Co-Occurrence attacks** is that instead of counting the frequencies of each individual keyword, we observe the co-occurrence of two keywords. Not all keywords will occur in combination with the same probability. What is defined in the attack is the probability that two keywords $a,b$ appear in one document: $|D[a] \cap D[b]| \setminus  | D|$
 
 The first step in order to exploit such information is to compute the co-occurrence matrix $B$ for the background info (the keyword universe, assuming the attacker knows the content of the different files). On the diagonal we have the probability that one keyword appears in one document (frequency). Later on, assuming that a subset of all the possible keywords are queried by the client, the co-occurrence matrix $Q$ for query results is calculated. What is observed is that $Q$ contains a permuted sub-set of $B$'s rows: mapping these subsets successfully means attacking the tokens. This problem is however, NP-complete depending on the dimensions on the matrix (in the paper they proposed an heuristic solution). The authors tried to build a similar attack without knowing perfectly the underlying content, however, success rate was pretty low.
 
-Which are the mitigations that can be adopted against such an attack? The result set needs to be modified by omitting results or adding fake entries (typically the second option is preferred since on client side, fake results can be removed without the server observing this post processing). What IKK defined is a $(\alpha,t)$-secure index. The general idea is that result sets are clustered in different partitions and each partition has at least $\alpha$ possible keywords. All result sets in a partition differ in $< t $ file IDs. If we have an $(\alpha,0)$-secure index then the attacker cannot distinguish between $\alpha$ different keywords candidates (they have the same frequencies in the results sets). This is done, as mentioned before, by adding fake results. With that method, they proved attacker success rate to be only 10%.
+Which are the mitigations that can be adopted against such an attack? The result set needs to be modified by omitting results or adding fake entries (typically the second option is preferred since on client side, fake results can be removed without the server observing this post processing). IKK defined the concept of $(\alpha,t)$-secure index. The general idea is that result sets are clustered in different partitions and each partition has at least $\alpha$ possible keywords. All result sets in a partition differ in $< t $ file IDs. If we have an $(\alpha,0)$-secure index then the attacker cannot distinguish between $\alpha$ different keywords candidates (they have the same frequencies in the results sets). This is done, as mentioned before, by adding fake results. With that method, they proved attacker success rate to be only 10%.
 
 ### File injection attacks
 
@@ -31,40 +31,36 @@ A research proposed what is called *Forward private SSE*: previous search tokens
 
 The idea behind Forward private SSE is to have different versions of search index and keep track of the current version. A new file $F_x$ is added according to current version $v$ using the update token $\mu_{F_x}^v$. Search tokens $\tau_q^o$ of older versions ($o<v$) are incompatible and when a new search operation is performed, then the version is increased. This can be implemented quite easily by using RSA encryption scheme with changed functionality of the keys: the secret key is used to encrypt the index while the public key will be used to decrypt it and go back to the previous history.
 
+The bottom line is that research on SSE is following two goals: finding new schemes, with better security, performance and/or functionality; finding new attacks, exploiting these new functionalities or decreasing the amount of background info required to conduct an attack. The question that pops up is: can we hide even more information for outsourced data?
+
 ## Oblivious Random Access Machine
 
-The general idea is to model a simple memory interface. Client A want to outsource data (partitioned in blocks, each identified by a unique address $a_i$) in encrypted form to the service provider. The client can then either read or write from a stated memory address. This model has been proposed in 1996 about SW protection: small trusted party in CPU un-accessible (hiding how the internal program works). Applied to today's world the trusted environment is the client and the untrusted party is the cloud service provider. 
+The general idea is to model a simple memory interface. Client A want to outsource data (partitioned in blocks, each identified by a unique address $a_i$) in encrypted form to the service provider. The client can then either read from or write to a specific memory address. This model has been proposed in 1996 about SW protection: small trusted party in CPU unaccessible (hiding how the internal program works). Applied to today's world the trusted environment is the client and the untrusted party is the cloud service provider. 
 
-The server should not be able to learn information about which data is being accessed (access pattern), age of data (and when it was last accessed), whether the same data is being accessed again, etc.
+The server should not be able to learn information about which data is being accessed (access pattern), age of data (and when it was last accessed), whether the same data is being accessed again, of course the content of data etc.
 
-Formally, the previous security goals can be defined as follows:
-
-Let $\overrightarrow{y} = ((o_M,a_M,d_M),...,(o_1,a_1,d_1))$ denote a data <u>request</u> sequences where $o_i$ denotes a read\write operation, $a_i$ denotes the address of the block being accessed, $d_i$ denotes the data being written. 
-
-Let $A(\overrightarrow{y})$ denote the (possibly randomized) sequence of <u>accesses</u> to the remote storage given the sequence of data requests. An ORAM is secure if for any two data sequences $\overrightarrow{y}$ and $\overrightarrow{z}$ of the same length, $A(\overrightarrow{y})$ and $A(\overrightarrow{z})$ are computationally indistinguishable.
+Formally, the previous security goals can be defined as follows. Let $\overrightarrow{y} = ((o_M,a_M,d_M),...,(o_1,a_1,d_1))$ denote a data <u>request</u> sequences where $o_i$ denotes a read\write operation, $a_i$ denotes the address of the block being accessed, $d_i$ denotes the data being written. Let $A(\overrightarrow{y})$ denote the (possibly randomized) sequence of <u>accesses</u> to the remote storage given the sequence of data requests. An ORAM is secure if for any two data sequences $\overrightarrow{y}$ and $\overrightarrow{z}$ of the same length, $A(\overrightarrow{y})$ and $A(\overrightarrow{z})$ are computationally indistinguishable. In simpler words, sequences of accesses to the remote storage should not reveal any information on the requests themselves.
 
 Let's see some of the fundamentals of ORAMs:
 
 - **Virtual address**: the address $a_i$ stated by the client (to define the block he is interested in);
 - **Virtual data value**: either a real data value $d_i$ or empty (dummy) block, denoted as $\bot$ (handy when doing read operations, always simulate a write operation but with dummy data);
-- **Actual storage**: the storage address accessed at server side;
+- **Actual address**: the storage address accessed at server side;
 - **Actual value**: the encrypted value stored at server side.
 
 Let's see how to build such a model: we permute all the data blocks that we want to outsource (together with their data addresses), encrypt them and outsource the tuples. Each tuple consists of a virtual address and virtual data.
 
-When the client wants to access a certain block then he downloads all tuples, decrypt them, search locally and write (if write operation is performed) or read. Then the client samples a new key, re-encrypt the tuples and upload the new version. Since those two versions are completely different, as an attacker I am not able to define which type of access has been performed (and the attacker doesn't even see any modification on the data).
+When the client wants to access a certain block, then they download all tuples, decrypt them, search locally and write (if write operation is performed) or read. Then the client samples a new key, re-encrypt the tuples and upload the new version. Since those two versions are completely different, an attacker is not able to define which type of access has been performed (and the attacker doesn't even see any modification on the data).
 
 This trivial construction is not so useful since communication is linear in data size and also client storage is (then why doesn't the client store everything on his side? There is no point in outsourcing with this implementation). It might be easier to decrease the storage by streaming the data (block per block, but all block are streamed otherwise timings attacks are possible) and block are decrypted individually on client side. When the right block is received, the client access it, performs the operation needed, re-encrypts the data and uploads it again.
 
 A requirement for a useful ORAM is that communication complexity must be sub-linear in data size. But how?
 
-First proposal in 1996: they divided the storage in a shelter and virtual memory. The latter contains real values and dummies and each address is accessed at most once. The shelter is a sort of cache for accessed data: after each access, the shelter is updated and streamed completely to the client. The trick is to defined their sizes so that the communication complexity is sub-linear. The shelter must be sublinear in data size since it's streamed completely.
+First proposal in 1996: divide the storage in a shelter and virtual memory. The latter contains real values and dummies and each address is accessed at most once. The shelter is a sort of cache for accessed data: after each access, the shelter is updated and streamed completely to the client. The trick is to defined their sizes so that the communication complexity is sub-linear. The shelter must be sublinear in data size since it's streamed completely.
 
 What happens if all virtual memory addresses have been accessed? Or what happens if the shelter is full? The idea is that the virtual memory layout is valid only for one epoch and then it's changed. Every now and then, the whole table is downloaded, re-encrypted (permuted) and uploaded again.
 
-Let's look at the details:
-
-- Each epoch lasts $\sqrt n$ data access operations. After one epoch is passed, obliviously permute memory and then perform actual data access operations. For the data access operation, read the complete shelter linearly (download, read, re-encrypt and upload again). If the memory block is found in the shelter, then access a dummy element stored in $a_i+cnt$ in the memory layout and download it. Shelter is then re-encrypted linearly and the value is added if it was not in the shelter before. Finally, $cnt= cnt +1$ (this cnt is used for non predictability). If instead, the value is not found in the shelter then the real element in $a_i$ is accessed. The following steps are the same. From the attacker perspective, shelter hit or miss doesn't look different. After the $\sqrt n$ access operation, the complete memory is updated in an oblivious way.
+Let's look at the details. Each epoch lasts $\sqrt n$ data access operations. After one epoch is passed, obliviously permute memory and then perform actual data access operations. For the data access operation, read the complete shelter linearly (download, read, re-encrypt and upload again). If the memory block is found in the shelter, then access a dummy element stored in $a_i+cnt$ in the memory layout and download it. Shelter is then re-encrypted linearly and the value is added if it was not in the shelter before. Finally, $cnt= cnt +1$ (this $cnt$ is used for non predictability). If instead the value is not found in the shelter, then the real element in $a_i$ is accessed. The following steps are the same. From the attacker perspective, shelter hit or miss doesn't look different. After the $\sqrt n$ access operation, the complete memory is updated in an oblivious way.
 
 The main problem is that memory updated should happen with limited memory consumption on client side: how? The authors implemented an **Oblivious Permutation** using PRF: how to implement PRP $\prod: \{0...n\} \rightarrow \{0...n\}$ with $O(\log n)$ storage on client side (where $n = m + \sqrt m$ that is the size of the actual memory + dummy values)?
 
