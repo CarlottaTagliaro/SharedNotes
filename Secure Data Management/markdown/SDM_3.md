@@ -4,9 +4,9 @@
 
 Typically a proxy represents a user when he cannot be active and present himself (e.g. proxy in a meeting), it's a sort of delegation.   
 
-The general scheme for proxy re-encryption works as follows: the information is sent, then there is a re-encryption scheme and the message is given to the delegate. Of course, the delegate won't have total control on the message and he won't have the key (it must be kept secret).
+The general scheme for proxy re-encryption works as follows: the information is sent, then there is a re-encryption scheme and the message is given to the delegate. Of course, the delegate won't have total control on the message and they won't have the key (it must be kept secret).
 
-The first example is based on RSA while the second is based on the El-Gamel approach (division by exponentiation working in a prime group).
+The first example is based on RSA while the second is based on the El-Gamel approach (division by exponentiation working in a prime group). In both cases, the secret key is somehow split between the proxy and the delegatee, which then perform two steps to reconstruct the initial message.
 
 In both approaches there are some security requirements that must be kept in mind. 
 
@@ -23,16 +23,16 @@ The two main types of such schemes are:
 
 In the formal definition of the protocol we have the following steps (very similar to the one discussed in the previous lecture):
 
-- $Setup →(pk, mk)$ by TA: in the setup phase there is a cyclic group $G$ 
+- $Setup →(pk, mk)$ by TA (Trusted Authority): in the setup phase there is a cyclic group $G$ 
 - $KeyGen (I, mk) →sk _I$ by TA: during this phase we should try to avoid collusion
-- $Encrypt (m, t, pk _I ) → c _I$:. exponentiation
+- $Encrypt (m, t, pk _I ) → c _I$: exponentiation
 - $Re-KeyGen (I,I’,t,sk _I ) → rk _{I-I’}$ by Alice (delegator)
 - $Re-Encrypt (c_ I , rk _{I-I’} ) → c _{I’}$ (different from revocation discussed before, where the key was split in two)
 - $Decrypt (c _{I’} , sk _{I’} ) → m$ by Bob (delegatee): complex terms that are built from the encrypted terms and they divide one by the other. The bilinear mapping property is applied so that most of the terms can cancel out.
 
 ## Key-Policy Attribute Based Encryption
 
-The encoding of the policy will be included in the key: is the key that must satisfy some attributes in order to be able to decrypt a message.
+The encoding of the policy will be included in the key: it is the key that must satisfy some attributes in order to be able to decrypt a message.
 
 <img src="../images/image-20201001092957532.png" alt="image-20201001092957532" style="zoom:33%;" />
 
@@ -63,7 +63,7 @@ The formal definition is the following: the predicate family $P = \{P_k\} _{k
 The security requirements for such a scheme are the:
 
 - **Correctness**: if the predicate is True, I want to be sure that the plaintext message retrieved is really the original message.  
-- **Full-security**: we can build this up through a security game. This is basically the same approach adopted in SCC with the simulator, challenger and distinguisher approach. You have a challenger and an adversary: the probability to distinguish between the two answers you get back should be negligible. The adversary makes a lot of queries in the initial phase trying to understand the encryption mechanism behind. After this "warm-up", the adversary chooses a set of messages, sends to the challenger and gets back the encryption (but the adversary does not know which message was encrypted). (this can be done again with keys and getting back the just generated keys) If the adversary is able to correctly understand or not which message was encrypted previously (and we repeat this challenge multiple times), then we plug those results in the formula to calculate the probability which must be below a certain threshold $\epsilon$ otherwise the adversary managed to break the system. 
+- **Full-security**: we can build this up through a security game. This is basically the same approach we have seen adopted in Secure Cloud Computing, with the simulator, challenger and distinguisher. You have a challenger and an adversary: the probability to distinguish between the two answers you get back should be negligible. The adversary makes a lot of queries in the initial phase trying to understand the encryption mechanism behind. After this "warm-up", the adversary chooses a set of messages, sends to the challenger and gets back the encryption (but the adversary does not know which message was encrypted). (this can be done again with keys and getting back the just generated keys) If the adversary is able to correctly understand or not which message was encrypted previously (and we repeat this challenge multiple times), then we plug those results in the formula to calculate the probability which must be below a certain threshold $\epsilon$ otherwise the adversary managed to break the system. 
 
 ### Multi-Authority Predicate Encryption
 
@@ -149,7 +149,7 @@ However, in this scheme, we don't have perfect security, rather statistical secu
 - PES requires perfect security and hides the value $α$ in the adversary’s view
 - MA-PES requires only statistical security and instead of hiding $α$ it hides only the value $ω$ in the adversary’s view. This allows to prove that an adversary cannot distinguish a correctly distributed challenge ciphertext from a challenge ciphertext taken from a more restricted distribution. This property should hold even if user secret keys are given, but only as long as the values $y$ associated to these keys do not let the predicate evaluate to TRUE.
 
-Still, having a single authority, hence a single point of failure represents a bigger risk rather than having distributed authorities (even if the level of security requires is lower).
+Still, having a single authority, hence a single point of failure, represents a bigger risk rather than having distributed authorities (even if the level of security required is lower).
 
 However, the name is misleading: Multi Authority admissible Pair Encoding (MA-PES) is defined for a single authority!
 
@@ -157,7 +157,7 @@ The basis on instantiating such a scheme for several authorities is that we swit
 
 To prove the security, we build a security game again: the challenger is asking for any kind of information, at a certain point he sends two distinct messages and if the system is weak then with a certain probability he is able to understand which message he got back encrypted. 
 
-Complexity assumptions means that the community is convinced that solving the underlying (hard) problems have an exponential complexity. There is not always a proof and this is the reason why are called assumptions.
+Complexity assumptions means that the community is convinced that solving the underlying (hard) problems has an exponential complexity. There is not always a proof and this is the reason why are called assumptions.
 
 ~~check all the formulas on the slides~~
 
