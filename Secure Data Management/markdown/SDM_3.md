@@ -136,3 +136,37 @@ For a $P_k : X_k × Y_k → \{TRUE, FALSE\}$ indexed by $k = (N, par)$
   - $E$ matrix of size $(w_1+1) \times m_3$
   - $\hat E$ matrix of size $w_3 \times m_1$ 
 
+~~the hat on letters means transposition of matrix~~
+
+Again the same security requirements remain the same: correctness and perfect security. The correctness can be explained as follows: an initial value $s$ and the predicate is TRUE, then if the message is encrypted and the predicate evaluation is true, then there is assurance that the decrypted message is the same as the original one.
+
+To prove perfect security becomes more complex: if the predicate evaluates to FALSE then it must be assured that the user has not access to the message. 
+
+So far, we have studied the single authority scheme but now we are plugging the multi-authorities into the different formulas. We do so by adding a so called "lone variable" in the encryption.
+
+However, in this scheme, we don't have perfect security, rather statistical security. The main differences between the multi-authority and simple variation can be summed up as follows:
+
+- PES requires perfect security and hides the value $α$ in the adversary’s view
+- MA-PES requires only statistical security and instead of hiding $α$ it hides only the value $ω$ in the adversary’s view. This allows to prove that an adversary cannot distinguish a correctly distributed challenge ciphertext from a challenge ciphertext taken from a more restricted distribution. This property should hold even if user secret keys are given, but only as long as the values $y$ associated to these keys do not let the predicate evaluate to TRUE.
+
+Still, having a single authority, hence a single point of failure represents a bigger risk rather than having distributed authorities (even if the level of security requires is lower).
+
+However, the name is misleading: Multi Authority admissible Pair Encoding (MA-PES) is defined for a single authority!
+
+The basis on instantiating such a scheme for several authorities is that we switch from a regular bilinear map to a composite order bilinear map (needed to have the composition of the different authorities). 
+
+To prove the security, we build a security game again: the challenger is asking for any kind of information, at a certain point he sends two distinct messages and if the system is weak then with a certain probability he is able to understand which message he got back encrypted. 
+
+Complexity assumptions means that the community is convinced that solving the underlying (hard) problems have an exponential complexity. There is not always a proof and this is the reason why are called assumptions.
+
+~~check all the formulas on the slides~~
+
+What we want to prove is that this way of constructing the multi authority predicate encryption scheme from this specific encryption leads to a fully secure system. The proof takes the shape of rewriting he game into an expression that can finally be expressed into these assumptions.
+
+<img src="../images/image-20201002100314076.png" alt="image-20201002100314076" style="zoom:50%;" />
+
+#### Q&A:
+
+- **Is collusion between different authorities prevented in MA-PE?** 
+
+  To prevent collusion, it doesn't matter if you are in a setting with single or multi authority. What is typically done is adding the ID of the actor that can encrypt (or random values). An additional countermeasure is to embed the authority ID (or a random number) into the encrypted message so that an user cannot use additional information inferred from another authority to decrypt a message belonging to another one.
