@@ -16,15 +16,14 @@ Against who are they protecting themselves though? The old cyber kill chain is n
 
 Another useful resource is the **CVE** database, which are basically related to software versions (e.g. vulnerabilities of older versions that should have been patched). The idea of a CVE is to highlight a way that an attacker could use to break into a system and rise awareness in the community.
 
+In order to detect attacks and defend systems, one of the most effective techniques is using data. Not restricted to cloud architectures, defenders can use firewalls, logs, ids etc. Is there a new attack surface that the cloud adds? Mainly the identity: the processing and the other things you use don't differ from the local scenario. When it comes to hybrid deployments, often times security decisions are taken based on the price. The cloud adds flexibility and resources, but then each customer decides where to place end-points, data etc. especially taking into consideration money.
 
+Security Information and event management (SIEM), evolution over time. Many times tools are running on premise, not really on cloud: defensive infrastructures for companies are often like Frankenstein. SIEMs are basically big data analysis tools focused on security. Parameters differentiating them are about flexibility, expressiveness, quality of rules, accuracy, signature/anomaly based... In dealing with this huge amount of data machine learning is a powerful solution and it is also were academy should push to find good solutions.
 
+Typical questions at an exam are:
 
+* who is responsible is certain cloud architectures;
+* against what should you defend;
+* how do you detect and mitigate a specific type of attack.
 
-
-
-
-
-
-
-
-
+For the assignment, each pair needs to implement 5 techniques on Azure, that is create and account, create a few VMs, preforming monitoring, launch attacks, show that the monitoring worked. 2 weeks deadline from Monday 5th.
