@@ -156,5 +156,11 @@ Usual way of working: first phase of probing, then we get the actual query. Two 
 
 In this case we get the adversary to choose only one keyword, the challenger chooses the other one randomly and sends back the encoding plus the random word chosen. The adversary has to state whether the encrypted world he got back was actually the one he sent or a random one.
 
+A limitation for PECK is that for each user a different encryption must be uploaded in the server and then the different keys are given to the different users. **mPECK** solves this limitation.
+
+Multiple actors can upload data and multiple actors can ask queries. The upload is sent to the server. Key generation is slightly different in this scenario (there is a set of $pk$ not only one). Given that these keys are generated from the same underlying secret, they are linked to each other and the system can work.
+
+The two security games are very similar with the exception of multiple keys being used.
+
 
 
