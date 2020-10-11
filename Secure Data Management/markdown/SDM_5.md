@@ -1,8 +1,8 @@
 # SDM 5
 
-## Searching keywords with wildcards on encrypted data
+## Multiple Write - Single Reader 
 
-### Multiple Write - Single Reader 
+### Searching keywords with wildcards on encrypted data
 
 A distributed system with public encryption  allows to have complex environments where a lot of parties interact with a single server. In the scenario we are analyzing, we assume to have several parties writing to a remote server but only one user can read the data. How can we store information and search for it in such a context?
 
@@ -62,50 +62,99 @@ Additional comparisons for the number of groups (pairings) can be found in the m
 
 The proof of security is in the so-called ‘selective’ model but Waters’ Dual System Encryption seems to fit well. Trapdoors reveal the location of wildcards: leaked through the set $J$. If we want to hide that, then additional mechanisms should be adopted. 
 
-----------
+## Single Writer - Multiple Reader 
+
+### Secure Anonymous Database Search (SADS): Single Equality Test
+
+The data of one user is stored encrypted on a minimally trusted server while many users can make queries for single equality tests, e.g. ‘Which documents contain keyword $w$?’.
+
+Main features of this approach are the following:
+
+- **Different granularities** of search capability for different users: for example some users can search the whole database vs. others searching only a few documents or search for any keywords vs. no search for some specific keywords. We can "play" with access rights that are given through allowed searches.
+- **Authorization and search is separated** $⇒$ more privacy for users.
+
+The scheme is set up with 2 Honest-but-Curious servers intermediaries:
+
+- **Index Server (IS)**: stores encrypted index produced by the data owner, and executes submitted queries. Does not learn the identity of the querying party, the query content or anything about the underlying database.
+- **Query Router (QR)**: connects querying users to the IS without revealing identities of either participant to any other entities, and translates encrypted queries such that the IS can provide encrypted and untraceable results without learning the query content or the result. The QR issues trapdoors to the IS.
+
+![image-20201011111436319](../images/image-20201011111436319.png)
+
+The Upload Party (single writer) uploads its encrypted data and provides IS with the search structures. The Query Party (multiple reader) submits encrypted keyword queries anonymously to IS via QR. IS sends back the encrypted search result through QR.
+
+The main issues are correctness (correctness of the returned answer, toleration of false positives or negatives), client security (the data owner, i.e. the uploader,  does not learn anything about keywords or the querier itself, queries must be anonymous), server security (the querier learns nothing about the data except for the specified output for his query), server access control (only authorized readers can submit queries and receive output for this data) and client anonymity (reason why intermediate servers are introduced, the writer does not learn anything about the readers and there is no linkage between two queries coming from the same client).
+
+Additional security requirements are the followings:
+
+- Data Security Against IS and QR: both IS and QR learn no information about the data stored in the server.
+- Client Anonymity Against IS: IS learns no information about the identity of the querier (including unlinkability).
+- Client Query-Security-up-to-Equality Against QR: given a sequence of queries from a given client, QR may learn nothing beyond which of the encrypted queries are the same.
+- Clients Result-Security-up-to-Equality Against IS: given a sequence of queries (forwarded to IS by QR, possibly originating from different clients), IS may learn which of the encrypted queries are answered with the same set  of matching documents. No other information about the queries (or the client(s) who generated them) may be learned by IS.
+
+The ability to learn these equalities comes from the deterministic encryption used in the scheme.
+
+The two main building blocks of SADS are:
+
+- **Re-routable encryption**: given the two servers, we use the QR to transform one ciphertext to another by encrypting the former with a different key. This is used to protect identities since the transformation key is only known to the intermediary party (the QR in our case).
+
+  We have a sort of translation and an additional encryption step to change the ciphertext so that the end receiver has no information on the sender.
+
+  For formulas refer to the slides.
+
+- **Bloom filter**: adds efficiency in the system; they represent a sort of index structure on data that makes possible to have very fast searches. No false negatives, some false positives.
+
+  BF is a probabilistic data structure to test membership of an element in a set (with no false negatives). It uses $h$ different hash functions to test the membership of an element in the form $H:\{0,1\}^* \rightarrow \{0,...2^m-1\}$ and one bit vector (initialized to 0) of length $2^m$. Basically when a new element is to be added, the $h$ different hash functions are computed returning $h$ different positions for the element: all the bits in these positions in the bit vector are changed to 1 (either they were 0 or already 1). When testing membership, the $h$ positions are computed again and:
+
+  - If each hash is an index where the bit vector has value 1 ⇒ maybe element
+  - If there is at least one index where it is 0 ⇒ definitely not element
+
+  It can return false positives but then the exceptions are checked.
+
+Deterministic private key encryption provides a fast search while maintaining an acceptable security level for SADS’s setting (security-up-to-equality, not safe against equality check). To bring some randomness they used hash functions. The ‘randomness’ is the hash of the private key $s$ and the message $x$, so encryption of the same message under the same key is always the same!
+
+Slide 14 shows an example of how this approach can be applied, low level, to bit factor words. In some cases padding might be needed when words have different lengths. In the case of SAEP padding, an identity padding is used while in SAEP+ a function depending on the message itself is used so to have more "randomness".
+
+The steps to setup this scheme were not explained during the lecture hence details can be found in the slides and papers.
+
+SADS scheme satisfies the security requirements of both a general secure anonymous keyword search scheme and SADS requirements for honest-but-curious Index Server and Query Router, under the discrete log hardness assumption and in the random oracle model.
+
+Few remarks on efficiency: the trapdoor generation requires 1 encryption (client) + 1 transformation (router) for each query. The search requires only 1 BF lookup. The communication between client and IS sends 1-1 message while the QR sends 2 messages. The Pre-processing requires index generation hence the definition of one BF per doc (linear in #keywords in the doc). If a change is made in the document the BF needs to be rebuilt for that document.
+
+## Multiple Writer – Multiple Reader
+
+### Public Key Encryption with Conjunctive Keyword Search and Its Extension to a Multi-user System
+
+The expressiveness in this context will be more complex: conjunctive keyword search meaning that in one query we address multiple keywords.
+
+mPECK: multi-user Public-Key Encryption Conjunctive Keyword Search
+
+Data of multiple users is stored encrypted on a minimally trusted server and multiple users can make queries for conjunctive keyword searches, e.g. ‘documents containing keyword1 AND keyword2 AND keyword3’. We have a document-level granularity.
+
+We assume some simplifications such as:
+
+- Same keyword never appears in two different keyword fields
+- Every keyword field is defined for every document
+- ‘to.Null’ for a field that doesn’t have a valid keyword
+- Don’t mark field names in keywords!
+
+The underlying security model is the Decision Linear Diffie Hellman assumption. We have groups and exponentiation, we multiply them and try to decide which $x$ and $y$ are summed to give $z$ as result. The assumption is that in probabilistic polynomial time this is not possible. We will find this again when constructing the security game model.
+
+Multiple parties can upload: each party owns two keys, a public one $pk$ and a secret one $sk$. They upload $pk$ but keep $sk$ hidden. A client sends a trapdoors queries and wants to find the keywords matching the trapdoor (using $pk$). In the query $Q$ there can be a list of keywords, $ \{I_1,..,I_N,w_{I_1},...,w_{I_N}\}$ (conjunctive keyword keyword) where $\{w_{I_1},...,w_{I_N}\} \sube W$. 
+
+The scheme itself has the same setup steps. 
+
+Semantic security against two variants of chosen keyword attacks: 
+
+- IND-CC-CKA (indistinguishability of **ciphertext** from **ciphertext**)
+- IND-CR-CKA (indistinguishability of **ciphertext** from **random**)
+
+#### Ciphertext-Ciphertext
+
+Usual way of working: first phase of probing, then we get the actual query. Two words sent and we get only one encrypted back. Can I find which one was encrypted? Additional probing and then we have to make a guess on the keyword we got back. If the choice was right then we won (should have the same probability of tossing a coin, so 0.5).
+
+#### Ciphertext-Random
+
+In this case we get the adversary to choose only one keyword, the challenger chooses the other one randomly and sends back the encoding plus the random word chosen. The adversary has to state whether the encrypted world he got back was actually the one he sent or a random one.
 
 
 
-### S/M -> SADS
-
-Single Equality Test <- simple expression
-
-main features: different granularities for different users hence we can play with "access rights". 
-
-The scheme is set up with 2 HBC servers intermediaries:
-
-- index server that stores the encrypted indexes and actually does the queries
-- query router plays with granularity of accesses
-
-the query router issues the trapdoors to the index server. 
-
-The main issues are correctness, client/server security (what they learn about keywords or the clients itself -> queries must be anonymous), server access control (regulate with servers) and client anonymity (intermediate servers we can play with visibility given towards different servers).
-
-IS -> Information Server
-
-The server shouldn't learn anything about the data. 
-
-Slide 7!
-
-- Re-routable encryption: two servers we have, protect identitied
-- Bloom filter: adds efficiency in the system, index structure on data that makes possible to have very fast searches
-
- TRANSlation -> double encryption
-
-Deterministic to make it fast -> to bring some randomness they used hash functions. Same message encrypted with the same key is the same
-
-in some cases padding might be needed when words have different lengths. 
-
-Bloom filters: use a sort of hash function -> false positives but then the exceptions are checked
-
-### M/M
-
-expressivness more complex
-
-DLDH -> groups and exponentiations, we multiply them can we decide which x and y are summed to give z as result? in PPT it is not possible. 
-
-multiple parties can upload -> upload pk but keep sk hidden. send trapdoors queries and i need to find documents containint that keyword (using the pk).
-
-in Q we can have a list of keywords -> conjunctive search
-
-two words sent and we get only one encrypted back -> additional probing and then we have to make a guess on the keyword we got back -> if the choice was right then we won (should have the same probablity of tossing a coin).  
