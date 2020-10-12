@@ -1,4 +1,4 @@
-# SCC 3
+# Secure Cloud Computing - Unit 3
 
 ## Attacking SSE
 

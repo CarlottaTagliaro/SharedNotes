@@ -1,4 +1,4 @@
-# SCC 4
+# Secure Cloud Computing - Unit 4
 
 ## Cloud security from an end-user perspective
 
