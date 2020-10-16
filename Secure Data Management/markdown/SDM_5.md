@@ -4,7 +4,7 @@
 
 ### Searching keywords with wildcards on encrypted data
 
-A distributed system with public encryption  allows to have complex environments where a lot of parties interact with a single server. In the scenario we are analyzing, we assume to have several parties writing to a remote server but only one user can read the data. How can we store information and search for it in such a context?
+A distributed system with public encryption allows to have complex environments where a lot of parties interact with a single server. In the scenario we are analyzing, we assume to have several parties writing to a remote server but only one user can read the data. How can we store information and search for it in such a context?
 
 The encrypted document itself is stored in the server and the encrypted trapdoor gives the searchable word to look for in that document. It is encrypted in such a way that it can be used to match the words in the encrypted document (granularity is at document level). If the searchable word is matched into the document then the encrypted document as a whole is returned.
 
@@ -16,7 +16,7 @@ The setup steps of the algorithm are the same for each approach we have seen so 
 
 Through this technique, expressiveness is enhanced. It is an extension of exact keyword searches (i.e. where $w=w’$) and is really handy for several applications since it provides additional flexibility in queries without having to repeat different similar queries. We like more flexibility, e.g. if we look for $ba*$ we want to find documents with keyword $bad$, $bag$ or $bat$ (that share the same leading chars). Thus, the support for a wildcard character (\*) in the search-queries is enabled (note: the $*$ means a single character).
 
-How it works? We use an anonymous IBE (Identity-based Encryption)-like scheme where the encryption keyword is represented as a tuple of symbols $w_1,...,w_n$ (e.g. unique chars). The trapdoor is derived by putting a wildcard $*$ at certain positions in that tuple, $w_1',...,w_n'$. The test is made for each individual position and returns true iff for all $i$ either $w_i′ = w_i$ or $w_i′ =*$.
+How does it work? We use an anonymous IBE (Identity-based Encryption)-like scheme where the encryption keyword is represented as a tuple of symbols $w_1,...,w_n$ (e.g. unique chars). The trapdoor is derived by putting a wildcard $*$ at certain positions in that tuple, $w_1',...,w_n'$. The test is made for each individual position and returns true if and only if for all $i$ either $w_i′ = w_i$ or $w_i′ =*$.
 
 The way it works is comparable with what seen before: in the encryption phase, we have at least one group element for each symbol (e.g. character) and then for the trapdoor we create the different elements corresponding to the different individual symbols. No terms is created if the corresponding symbol is a wildcard. 
 
@@ -52,7 +52,7 @@ $$
 $$
 The inverse of the exponentiation is not feasible. The method hides the encrypted keywords until the search takes place. The security in this case is in the *selective* model.
 
-Performance wise is important the number of pairing that needs to be done but the nice thing about this approach is that the number is fixed. 
+Performance-wise is important the number of pairing that needs to be done but the nice thing about this approach is that the number is fixed. 
 
 Hidden Vector Encryption can be used in selective models. 
 
@@ -66,12 +66,12 @@ The proof of security is in the so-called ‘selective’ model but Waters’ Du
 
 ### Secure Anonymous Database Search (SADS): Single Equality Test
 
-The data of one user is stored encrypted on a minimally trusted server while many users can make queries for single equality tests, e.g. ‘Which documents contain keyword $w$?’.
+The data of one user is stored encrypted on a minimally trusted server while many users can make queries for single equality tests, e.g. ‘Which documents contain keyword $w$?’. A possible example of such a context is the one of SADS (Secure Anonymous Database Search) schemes.
 
 Main features of this approach are the following:
 
-- **Different granularities** of search capability for different users: for example some users can search the whole database vs. others searching only a few documents or search for any keywords vs. no search for some specific keywords. We can "play" with access rights that are given through allowed searches.
-- **Authorization and search is separated** $⇒$ more privacy for users.
+- **Different granularities** of search capability for different users: for example some users can search the whole database vs. others only a few documents or search for any keywords vs. no search for some specific keywords. We can "play" with access rights that are given through allowed searches.
+- **Authorization and search is separated**, thus more privacy is guaranteed to users.
 
 The scheme is set up with 2 Honest-but-Curious servers intermediaries:
 
@@ -84,12 +84,12 @@ The Upload Party (single writer) uploads its encrypted data and provides IS with
 
 The main issues are correctness (correctness of the returned answer, toleration of false positives or negatives), client security (the data owner, i.e. the uploader,  does not learn anything about keywords or the querier itself, queries must be anonymous), server security (the querier learns nothing about the data except for the specified output for his query), server access control (only authorized readers can submit queries and receive output for this data) and client anonymity (reason why intermediate servers are introduced, the writer does not learn anything about the readers and there is no linkage between two queries coming from the same client).
 
-Additional security requirements are the followings:
+Additional security requirements are the following:
 
 - Data Security Against IS and QR: both IS and QR learn no information about the data stored in the server.
 - Client Anonymity Against IS: IS learns no information about the identity of the querier (including unlinkability).
 - Client Query-Security-up-to-Equality Against QR: given a sequence of queries from a given client, QR may learn nothing beyond which of the encrypted queries are the same.
-- Clients Result-Security-up-to-Equality Against IS: given a sequence of queries (forwarded to IS by QR, possibly originating from different clients), IS may learn which of the encrypted queries are answered with the same set  of matching documents. No other information about the queries (or the client(s) who generated them) may be learned by IS.
+- Clients Result-Security-up-to-Equality Against IS: given a sequence of queries (forwarded to IS by QR, possibly originating from different clients), IS may learn which of the encrypted queries are answered with the same set of matching documents. No other information about the queries (or the client(s) who generated them) may be learned by IS.
 
 The ability to learn these equalities comes from the deterministic encryption used in the scheme.
 
@@ -103,10 +103,10 @@ The two main building blocks of SADS are:
 
 - **Bloom filter**: adds efficiency in the system; they represent a sort of index structure on data that makes possible to have very fast searches. No false negatives, some false positives.
 
-  BF is a probabilistic data structure to test membership of an element in a set (with no false negatives). It uses $h$ different hash functions to test the membership of an element in the form $H:\{0,1\}^* \rightarrow \{0,...2^m-1\}$ and one bit vector (initialized to 0) of length $2^m$. Basically when a new element is to be added, the $h$ different hash functions are computed returning $h$ different positions for the element: all the bits in these positions in the bit vector are changed to 1 (either they were 0 or already 1). When testing membership, the $h$ positions are computed again and:
+  A BF is a probabilistic data structure to test membership of an element in a set (with no false negatives). It uses $h$ different hash functions to test the membership of an element in the form $H:\{0,1\}^* \rightarrow \{0,...2^m-1\}$ and one bit vector (initialized to 0) of length $2^m$. Basically when a new element is to be added, the $h$ different hash functions are computed returning $h$ different positions for the element: all the bits in these positions in the bit vector are changed to 1 (either they were 0 or already 1). When testing membership, the $h$ positions are computed again and:
 
-  - If each hash is an index where the bit vector has value 1 ⇒ maybe element
-  - If there is at least one index where it is 0 ⇒ definitely not element
+  - If in each of them the bit in the vector is 1, there it may be an element;
+  - If there is at least one index where it is 0, then it is definitely not element.
 
   It can return false positives but then the exceptions are checked.
 
@@ -118,7 +118,7 @@ The steps to setup this scheme were not explained during the lecture hence detai
 
 SADS scheme satisfies the security requirements of both a general secure anonymous keyword search scheme and SADS requirements for honest-but-curious Index Server and Query Router, under the discrete log hardness assumption and in the random oracle model.
 
-Few remarks on efficiency: the trapdoor generation requires 1 encryption (client) + 1 transformation (router) for each query. The search requires only 1 BF lookup. The communication between client and IS sends 1-1 message while the QR sends 2 messages. The Pre-processing requires index generation hence the definition of one BF per doc (linear in #keywords in the doc). If a change is made in the document the BF needs to be rebuilt for that document.
+Few remarks on efficiency: the trapdoor generation requires 1 encryption (client) + 1 transformation (router) for each query. The search requires only 1 BF lookup. The communication between client and IS sends 1-1 message while the QR sends 2 messages. The Pre-processing requires index generation hence the definition of one BF per doc (linear in the number of keywords in the doc). If a change is made in the document the BF needs to be rebuilt for that document.
 
 ## Multiple Writer – Multiple Reader
 
