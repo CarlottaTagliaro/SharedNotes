@@ -168,3 +168,18 @@ There are still two problems to be addressed:
 - **Leveled HE only**: still limited in the circuit depth since a too large noise destroys underlying plaintext.
 
 How can we reduce the noise? A naif solution would be to refresh noise to a low level by sending intermediate results to client to decrypt and encrypt again. However, this requires interactivity we want to avoid (the client must be online to refresh the noise).
+
+A better solution is to encrypt the secret key, send it to the Cloud Provider who uses it to evaluate the decryption circuit (algorithm) over the encrypted data hence refreshing the noise. 
+
+Going back to the analogy: we put the dirty gloves box together with the key in a new clean one.  
+
+This process is called **bootstrapping**: we perform the decryption algorithm over the encrypted data using homomorphic property. 
+
+$Dec(sk, c)$: Output $m = c \mod p \mod 2$ which is the same as $c − p ⋅ ⌊c/p⌉ \mod 2$. Because $p$ is odd we can also $c − ⌊c/p⌉ \mod 2$. This is the circuit we need to evaluate over encrypted data, however, it is still too deep for bootstrapping.
+
+What we need is an idea of how to reduce that. This is called **squash decryption circuit**: we post process ciphertext to support more efficient decryption (we add a hint of the secret key to the ciphertext which is only useful in combination with the encryption of the symmetric key). We obtain a shallower circuit that can be evaluated homomorphically.
+
+We modify the $KeyGen$ function by adding a large number of rational numbers to public key, $r _1 , ... , r _t ∈ [0,2]$ such that for a sparse subset $R: \sum_{i∈R} r _i = 1/p \mod 2$. The new secret key is then a bit vector $\vec s = (s _1 , ... , s _t )$ with $s_ i = 1$ if $i ∈ R$, else $s_ i = 0$.
+
+The $Enc$, $Eval$ function have an additionally output $\vec z = (c ⋅ r_ i)_ {i=[1,t]}$. For the $Dec$ with new secret key is now: $c − (\sum _{i∈R} s _i z _i) \mod 2$ to cancel out all the non-relevant $r_i$s. It can be evaluated homomorphically because $R$ is a sparse subset (only a smaller subset of the vector contains a $1$).
+
