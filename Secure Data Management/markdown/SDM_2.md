@@ -153,7 +153,7 @@ Anyone who wants to encrypt their message needs the $pk$ of the system. Everyone
 
 Formal definition:
 
-- $Setup -> (pk, mk)$: public key + master secret key by TA
+- $Setup → (pk, mk)$: public key + master secret key by TA
 
 - for every participant the TA generates a secret key based on their attributes
   

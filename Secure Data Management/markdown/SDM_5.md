@@ -56,7 +56,7 @@ Performance-wise is important the number of pairing that needs to be done but th
 
 Hidden Vector Encryption can be used in selective models. 
 
-For comparison with other existing scheme please refer to the tables in the slides: additionally, note that the dimension of the public key (i.e. $n+N+2$) is less than $2n + 2$ given that $N\leq n$. We can limit the size of ciphertext by limiting the amount of allowed wildcards at setup/encryption time.
+For comparison with other existing scheme please refer to the tables in the slides: additionally, note that the dimension of the public key (i.e. $n+N+2$, where $n$ is the number of symbols in the keyword space and $N$ is the number of wildcards) is less than $2n + 2$ given that $N\leq n$. We can limit the size of ciphertext by limiting the amount of allowed wildcards at setup/encryption time.
 
 Additional comparisons for the number of groups (pairings) can be found in the material too. Prime order is always preferred to composite order. Note that the Test-algorithm needs a constant number of pairings, which makes the searching process fast(er).
 

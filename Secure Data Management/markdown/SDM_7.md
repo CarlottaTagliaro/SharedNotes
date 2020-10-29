@@ -1,6 +1,6 @@
-# SDM_7
+# SDM 7
 
-In the lecture we'll have a look at DataBase principles. Blockchain will be compared to a Distributed DB  on 4 different levels: data model, state + history, query language and consensus protocol. 
+In the lecture we will have a look at DataBase principles. Blockchain will be compared to a Distributed DB on 4 different levels: data model, state + history, query language and consensus protocol. 
 
 When do we need a BC? Right now, BC are extremely hyped (can be found everywhere). BC can be seen as Distributed Data Management Systems and thanks to that, the best application domain can be derived. 
 
@@ -16,14 +16,14 @@ The query language is the language used to interact with the DBMS, in relational
 
 The **state** of a database refers to the data it stores at a specific point in time. A transaction changes the state (or keeps it the same in case of only read operations). Finally, the data model describes how the data is stored in the DB.
 
-A transaction is a unit of work that operates on one or more databases and that may consist of one or more “steps”. A transaction is *committed* if all step complete successfully and the result is stored permanently. It is *aborted* if one or more steps failed to complete successfully; the system is reverted to the state it was before the transaction took place (the part of transaction that was done needs to be reverted). 
+A transaction is a unit of work that operates on one or more databases and that may consist of one or more “steps”. A transaction is *committed* if all steps complete successfully and the result is stored permanently. It is *aborted* if one or more steps failed to complete successfully; the system is reverted to the state it was before the transaction took place (the part of transaction that was done needs to be reverted). 
 
 A very simple example of application is the one of money transfer: it needs to be one action since we want data to leave the bank account of the sender and reach the receiver's one.
 
 Transaction must have the **ACID** properties:
 
 - **Atomicity**: either a transaction is completely executed or not at all;
-- **Consistency**: a transaction does not violate any invariant, e.g., validation rules (e.g. age < 100);
+- **Consistency**: a transaction does not violate any invariant, e.g., validation rules (like age < 100);
 - **Isolation** (= Serializable): multiple transactions may be executed in parallel, but have to look as if they were sequentially executed. This imposes an order to follow in order to preserve consistency;
 - **Durability**: a committed transaction is persistent (it guarantees the state), e.g., does not get lost in a power failure.
 
@@ -141,13 +141,13 @@ How does it work at a high level? A node carries out a transaction and then broa
 
 Nodes express their acceptance of the block by working on creating the next block in the chain, using the hash of the accepted block as the previous hash.
 
-A **Proof-of-Work (POW)** is part of the algorithm to make the construction of blocks more difficult (to make less parties be able to built blocks). It represents a probabilistic proof that a given amount of computation has been put behind a chain of blocks. It works by finding a value $V$ that if hashed through $SHA−256$ delivers a value starting with a pre-defined number of zero bits:
+A **Proof-of-Work (POW)** is part of the algorithm to make the construction of blocks more difficult (to make less parties be able to built blocks). It represents a probabilistic proof that a given amount of computation has been put behind a chain of blocks. It works by finding a value $V$ that if hashed through $SHA256$ delivers a value starting with a pre-defined number of zero bits:
 $$
-SHA−256 (V) = 00xxxxxxxxxxxxxxxxxxxxxx
+SHA256 (V) = 00xxxxxxxxxxxxxxxxxxxxxx
 $$
 where the number of $0$s determines the difficulty. Complexity increases exponentially with the number of required zero bits (as the system gets older, the number of $0$s increases). Mining a block becomes harder and harder in an exponential way. 
 
-In Bitcoin what happens is that we have multiple writers who do not trust each other and no trusted intermediary; If >50% of this computational power is acting in good faith (although it’s more complicated than just that), you can assume the current state of the ledger is valid. That is a sort of underlying assumption. In practice this means that we have a quite democratic fully distributed P2P network, however, the fact that mining blocks becomes exponentially more difficult (as seen before) leads to the fact that we need more computing power to mine new blocks. We have *mining farms* which basically mine blocks and win the reward for having done it. This makes the system uneven, since the more computing power, the more blocks you can mine: the system is now ruled by 10 mining farms around the globe. The original idea of a democratic system is valid in theory but not in practice.
+In Bitcoin what happens is that we have multiple writers who do not trust each other and no trusted intermediary; If >50% of this computational power is acting in good faith (although it’s more complicated than just that), you can assume the current state of the ledger is valid. That is a sort of underlying assumption. In practice this means that we have a quite democratic fully distributed P2P network, however, the fact that mining blocks becomes exponentially more difficult (as seen before) leads to the fact that we need more computing power to mine new blocks. We have *mining farms* which basically mine blocks and win the reward for having done it. This makes the system uneven, since the more computing power, the more blocks you can mine: the system is now ruled by 10 mining farms around the globe. The original idea of a democratic system is valid in theory but not in practice (*especially if you think that most of these mining farms are located in China, under control of who knows who ;)* ).
 
 Properties needed to use Blockchain in a fault tolerant protocol are:
 

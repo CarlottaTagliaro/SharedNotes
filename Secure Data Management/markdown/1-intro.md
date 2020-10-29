@@ -58,7 +58,7 @@ Another very important aspect is proofs, is the protocol really offering the sec
 - GGM (Generic Group Model), a model in which the attacker only knows one possible encoding of the group(s) involved and not an efficient one, so they have to query and oracle to complete operations.
 - STM (Standard Model), the adversary does not have enough time nor computational power to break the scheme (e.g. exhaustive search is too complex). AES keys length are becoming longer to keep using this model, so it really relies on the design of a scheme.
 
-A scheme needs to have a solid mathematical analysis to prove that it is secure. That is, in every case, a theoretical proof (of course, barring implementation mistakes) that a scheme cannot be broken by a certain class of attackers. To complete such an analysis, we need to provide a number of information, such as the actual description of the scheme. the description of the attackers, the model, the various assumptions (e.g. discrete log for Diffie-Hellman), the win condition (when is the system broken?) and finally a proof.
+A scheme needs to have a solid mathematical analysis to prove that it is secure. That is, in every case, a theoretical proof (of course, barring implementation mistakes) that a scheme cannot be broken by a certain class of attackers. To complete such an analysis, we need to provide a number of information, such as the actual description of the scheme, the description of the attackers, the model, the various assumptions (e.g. discrete log for Diffie-Hellman), the win condition (when is the system broken?) and finally a proof.
 
 A security analysis needs to provide:
 
@@ -71,7 +71,7 @@ A security analysis needs to provide:
 
 Focusing on the class of attackers, there are several properties involved. For example, deterministic vs probabilistic scenarios, time boundaries (polynomial/exponential/unlimited), possible collusions, role in the schema (server/user/third parties etc.), adaptability.
 
-A practical example can be the setting for searchable encryption. Here, he have some methods that are executed in the protocol for its functioning: the plaintext and the master secret key need (of course) to be hidden. To prove the security of such scheme we need to create a model of a polynomially bounded attacker, demonstrating that the generated ciphertext is indistinguishable from random and that trapdoors of other keywords do not reveal any information on the ciphertext. *Here we go into technicalities of this security scheme that however have not been introduced, I think this is done just to show how we can security proof something*.
+A practical example can be the setting for searchable encryption. Here, he have some methods that are executed in the protocol for its functioning: the plaintext and the master secret key need (of course) to be hidden. To prove the security of such scheme we need to create a model of a polynomially bounded attacker, demonstrating that the generated ciphertext is indistinguishable from random and that trapdoors of other keywords do not reveal any information on the ciphertext. *Here we go into technicalities of this security scheme that however has not been introduced, I think this is done just to show how we can security proof something*.
 
 The different phases of searchable encryption algorithms are the following:
 
@@ -91,8 +91,8 @@ $Pr[b = b’] = 1⁄2 + ε$. If $ε$ is not negligible attacker wins game and sc
 To prove that is $ε$ negligible security proof must answer these questions
 
 1. Is ciphertext indistinguishable from random?
-2. Does trapdoor of keywords other than challenge keyword reveal information on challenge ciphertext?
-3. Is trapdoor of challenge keyword simulabile?
+2. Do trapdoors of keywords other than challenge keyword reveal information on challenge ciphertext?
+3. Is the trapdoor of challenge keyword possible to simulate?
 
 <img src="./../images/image-20200912164104621.png" alt="image-20200912164104621" style="zoom: 33%;" />
 
